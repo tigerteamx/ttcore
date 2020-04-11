@@ -10,4 +10,4 @@ class MailAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['created', 'user', 'meta']
+    list_display = ['created', 'related_user', 'meta']
