@@ -42,12 +42,11 @@ class Mail(CoreModel):
     content = models.TextField(_('Content'), blank=True)
     html_content = models.TextField(_('HTML Content'), blank=True)
 
-    errors = models.TextField(_('Content'), blank=True, default='')
+    errors = models.TextField(_('Errors'), blank=True, default='')
     sent = models.DateTimeField(blank=True, null=True)
 
     def send(self):
         try:
-
             send_mail(
                 self.subject,
                 self.content,
@@ -57,7 +56,7 @@ class Mail(CoreModel):
             )
             self.sent = timezone.now()
         except: # noqa
-            self.error = format_exc()
+            self.errors = format_exc()
 
         self.save()
 

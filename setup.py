@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ttcore",
-    version="0.0.5",
+    version="0.0.6",
     author="Martin F",
     author_email="pypi.org@tigerteamx.com",
     description="Django functionality to speedup development",

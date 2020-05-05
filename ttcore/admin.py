@@ -5,7 +5,13 @@ from .models import Mail, Event
 
 @admin.register(Mail)
 class MailAdmin(admin.ModelAdmin):
-    list_display = ['created', 'to_address', 'from_address']
+    list_display = [
+        'created',
+        'to_address',
+        'from_address',
+        'sent',
+        'errors',
+    ]
 
 
 @admin.register(Event)
