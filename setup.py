@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ttcore",
-    version="0.0.7",
+    version="0.0.8",
     author="Martin F",
     author_email="pypi.org@tigerteamx.com",
     description="Django functionality to speedup development",
@@ -14,8 +14,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tigerteamx/ttcore",
     packages=setuptools.find_packages(),
-    install_requires=['Django >= 2.0',
-                      "django-cron==0.5.1"],
+    install_requires=[],  # Used for dependencies
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
