@@ -229,10 +229,7 @@ class ErrorHandler:
         self._recent_msgs = []
         self.max_request_per_minute = max_request_per_minute
         self.message = message
-        if on_error is None:
-            self.on_error = self._on_error
-        else:
-            self.on_error = on_error
+        self.on_error = on_error if on_error else self.on_error
 
     def _on_error(self):
         msg = ""
@@ -247,7 +244,7 @@ class ErrorHandler:
 
         return msg
 
-    def _spike_protected_msg(self, msg: str):
+    def on_msg(self, msg: str):
         current_date = datetime.now()
 
         self._recent_msgs = [
@@ -267,7 +264,7 @@ class ErrorHandler:
             except:  # noqa
                 msg = f"{self.on_error()}\n\n{format_exc()}"
                 print(msg)
-                self._spike_protected_msg(msg)
+                self.on_msg(msg)
                 self._recent_msgs.append(datetime.now())
                 return {"msg": "Internal Error"}
 
