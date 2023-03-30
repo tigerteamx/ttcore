@@ -20,5 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    keywords=['productivity', 'bottlepy', 'peewee'],
     python_requires='>=3.8',
+    include_package_data=True,
 )
