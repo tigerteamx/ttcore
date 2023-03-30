@@ -1,29 +1,37 @@
+import os
 
 
-def get_or_fail(model):
-    """ OBSOLETE """
-    from flask import abort
-    from ttcore.flask import err
-    instance = model.first()
-    if instance is None:
-        return abort(err('Could not find model', model=model.model.__name__))
-    return instance
+def migrate(database, migrations_path):
+    from playhouse.kv import KeyValue
+
+    files = sorted(os.listdir(migrations_path))
+    kv = KeyValue(database=database)
+    for f in files:
+        if not f.endswith(".sql"):
+            continue
+
+        if "migration_" + f in kv:
+            continue
+
+        print(f"Migration {f}...")
+        with open(f"{migrations_path}/{f}") as fh:
+            cursor = database.execute_sql(fh.read())
+            kv["migration_" + f] = "completed"
+            cursor.close()
 
 
-def _get_or_response(model, response):
-    from flask import abort
-    instance = model.first()
-    if instance is None:
-        return abort(response(
-            'Could not find model', model=model.model.__name__))
-    return instance
+def query_search(qs, q, cols):
+    """
+        This makes it possible to search for e.g. "uuid javascript"
+        and it will find places where one of the columns have uuid
+        AND one/more column also have javascript.
+    """
+    import operator
+    from functools import reduce
+    search_clause = True
+    for word in q.split(" "):
+        word_clause = [(col ** f"%%{word}%%") for col in cols]
+        search_clause = search_clause & reduce(operator.or_, word_clause)
 
+    return search_clause
 
-def get_or_500(model):
-    from ttcore.flask import err
-    return _get_or_response(model, err)
-
-
-def get_or_404(model):
-    from ttcore.flask import not_found
-    return _get_or_response(model, not_found)
