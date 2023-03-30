@@ -229,7 +229,7 @@ class ErrorHandler:
         self._recent_msgs = []
         self.max_request_per_minute = max_request_per_minute
         self.message = message
-        self.on_error = on_error if on_error else self.on_error
+        self.on_error = on_error if on_error else self._on_error
 
     def _on_error(self):
         msg = ""
