@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from traceback import format_exc
 import inspect
+import time
 
 import peewee
-from bottle import request, post, get, hook, response, HTTPResponse, default_app, apps
+from bottle import request, post, get, hook, response, HTTPResponse, default_app, apps, route
 
 
 from .utils import mkdir, rmdir, read, is_ip4, dumps
@@ -377,6 +378,43 @@ def install_docs(path, base):
             html = f.read().replace("{{DOCS_URL}}", f'{path}.json')
             html = html.replace("{{DOCS_JSON}}", dumps(dict(rules=rules, base=base)))
             return html
+
+
+def install_cors(hosts):
+    @route("/<:re:.*>", method="OPTIONS")
+    def enable_cors_generic_route():
+        """
+        This route takes priority over all others. So any request with an OPTIONS
+        """
+        add_cors_headers()
+
+    @hook("after_request")
+    def enable_cors_after_request_hook():
+        add_cors_headers()
+
+    def add_cors_headers():
+        cors_ok = request.headers["Host"] in hosts
+
+        if cors_ok:
+            response.headers["Access-Control-Allow-Origin"] = '*'
+            response.headers[
+                "Access-Control-Allow-Headers"
+            ] = "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, sentry-trace"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers[
+                "Access-Control-Allow-Methods"
+            ] = "POST, HEAD,PATCH , OPTIONS, GET, PUT"
+
+
+def stopwatch(callback):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        body = callback(*args, **kwargs)
+        end = time.time()
+        response.headers["X-Time"] = str(end - start)
+        return body
+
+    return wrapper
 
 
 def make_public(funcs, roles=None, prefix=""):
