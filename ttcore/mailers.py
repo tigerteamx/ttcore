@@ -1,7 +1,7 @@
 import requests
 from traceback import format_exc
 from dataclasses import dataclass
-from typing import Callable, Optional
+from utils import str_or_exception
 
 
 @dataclass
@@ -10,25 +10,6 @@ class Mail:
     send_to: str
     subject: str = ""
     body: str = ""
-
-
-@dataclass
-class MailerData:
-    ...
-
-
-@dataclass
-class MailgunData(MailerData):
-    key: str
-    domain: str
-    in_eu: bool = False
-
-
-@dataclass
-class TelegramData(MailerData):
-    key: str
-    chat: str
-    on_error: Callable = None
 
 
 class MailgunMailer:
@@ -102,18 +83,24 @@ class ConsoleMailer:
         return None
 
 
-def init_mailer(mailer_data: Optional[MailerData]):
-    if isinstance(mailer_data, TelegramData):
+def init_mailer(configs):
+    mail_type = str_or_exception(configs, "type")
+    if mail_type == "telegram":
         return TelegramMailer(
-            key=mailer_data.key,
-            chat=mailer_data.chat,
-            on_error=mailer_data.on_error,
+            str_or_exception(configs, "key"),
+            str_or_exception(configs, "chat"),
         )
-    elif isinstance(mailer_data, MailgunData):
+    elif mail_type == "mailgun":
         return MailgunMailer(
-            key=mailer_data.key,
-            domain=mailer_data.domain,
-            in_eu=mailer_data.in_eu,
+            str_or_exception(configs, "key"),
+            str_or_exception(configs, "domain"),
+            configs.get("in_eu", False),
         )
+    elif mail_type == "console":
+        return ConsoleMailer()
 
-    return ConsoleMailer()
+    raise Exception(
+        f"Invalid mail_type, expected telegram, mailgun, console "
+        f"but got {mail_type}"
+    )
+

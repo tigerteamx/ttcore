@@ -1,19 +1,5 @@
 from traceback import format_exc
-from dataclasses import dataclass
-from typing import Callable, Optional
 import requests
-
-
-@dataclass
-class MessengerData:
-    ...
-
-
-@dataclass
-class TelegramData(MessengerData):
-    key: str
-    chat: str
-    on_error: Callable = None
 
 
 class Telegram:
@@ -46,12 +32,13 @@ class Console:
         print(f'Message "{msg}"')
 
 
-def init_message(messenger_data: Optional[MessengerData]):
-    if isinstance(messenger_data, TelegramData):
-        return Telegram(
-            key=messenger_data.key,
-            chat=messenger_data.chat,
-            on_error=messenger_data.on_error,
-        )
+def init_message(settings):
+    message_type = settings.get('type', '')
 
-    return Console()
+    if message_type == "console":
+        return Console()
+    elif message_type == "telegram":
+        return Telegram(settings['key'], settings['chat'])
+    else:
+        raise Exception("Invalid settings for Deepl")
+
