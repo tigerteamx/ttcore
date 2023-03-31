@@ -1,7 +1,7 @@
 import requests
 from traceback import format_exc
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 
 @dataclass
@@ -13,22 +13,22 @@ class Mail:
 
 
 @dataclass
-class MailgunData:
+class MailerData:
+    ...
+
+
+@dataclass
+class MailgunData(MailerData):
     key: str
     domain: str
     in_eu: bool = False
 
 
 @dataclass
-class TelegramData:
+class TelegramData(MailerData):
     key: str
     chat: str
     on_error: Callable = None
-
-
-@dataclass
-class ConsoleData:
-    ...
 
 
 class MailgunMailer:
@@ -102,23 +102,18 @@ class ConsoleMailer:
         return None
 
 
-def init_mailer(mailer):
-    if isinstance(mailer, TelegramData):
+def init_mailer(mailer_data: Optional[MailerData]):
+    if isinstance(mailer_data, TelegramData):
         return TelegramMailer(
-            key=mailer.key,
-            chat=mailer.chat,
-            on_error=mailer.on_error,
+            key=mailer_data.key,
+            chat=mailer_data.chat,
+            on_error=mailer_data.on_error,
         )
-    elif isinstance(mailer, MailgunData):
+    elif isinstance(mailer_data, MailgunData):
         return MailgunMailer(
-            key=mailer.key,
-            domain=mailer.domain,
-            in_eu=mailer.in_eu,
+            key=mailer_data.key,
+            domain=mailer_data.domain,
+            in_eu=mailer_data.in_eu,
         )
-    elif isinstance(mailer, ConsoleData):
-        return ConsoleMailer()
 
-    raise Exception(
-        f"Invalid mailer type, expected TelegramData, MailgunData, ConsoleData"
-        f"but got {type(mailer)}"
-    )
+    return ConsoleMailer()
