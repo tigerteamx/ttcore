@@ -1,7 +1,7 @@
 import requests
 from traceback import format_exc
 from dataclasses import dataclass
-from utils import str_or_exception
+from .utils import str_or_exception
 
 
 @dataclass
