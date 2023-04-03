@@ -40,5 +40,5 @@ def init_message(settings):
     elif message_type == "telegram":
         return Telegram(settings['key'], settings['chat'])
     else:
-        raise Exception("Invalid settings for Deepl")
+        raise Exception("Invalid settings for messenger.")
 
