@@ -116,3 +116,11 @@ def sanitize(filename):
         if len(filename) == 0:
             filename = "__"
     return filename
+
+
+def str_or_exception(d, key):
+    if key in d:
+        return d[key]
+
+    raise Exception(f"Expected {key} but not found")
+

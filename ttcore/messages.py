@@ -1,19 +1,5 @@
 from traceback import format_exc
-from dataclasses import dataclass
-from typing import Callable
 import requests
-
-
-@dataclass
-class TelegramData:
-    key: str
-    chat: str
-    on_error: Callable = None
-
-
-@dataclass
-class ConsoleData:
-    ...
 
 
 class Telegram:
@@ -46,17 +32,13 @@ class Console:
         print(f'Message "{msg}"')
 
 
-def init_message(messenger):
-    if isinstance(messenger, TelegramData):
-        return Telegram(
-            key=messenger.key,
-            chat=messenger.chat,
-            on_error=messenger.on_error,
-        )
-    elif isinstance(messenger, ConsoleData):
-        return Console()
+def init_message(settings):
+    message_type = settings.get('type', '')
 
-    raise Exception(
-        f"Invalid messenger type, expected TelegramData, ConsoleData "
-        f"but got {type(messenger)}"
-    )
+    if message_type == "console":
+        return Console()
+    elif message_type == "telegram":
+        return Telegram(settings['key'], settings['chat'])
+    else:
+        raise Exception("Invalid settings for messenger.")
+
