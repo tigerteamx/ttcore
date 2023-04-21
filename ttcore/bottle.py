@@ -7,9 +7,11 @@ from datetime import datetime
 from traceback import format_exc
 import inspect
 import time
+import os
+
 
 import peewee
-from bottle import request, post, get, hook, response, HTTPResponse, default_app, apps, route
+from bottle import request, post, get, hook, response, HTTPResponse, default_app, route, SimpleTemplate
 
 
 from .utils import mkdir, rmdir, read, is_ip4, dumps
@@ -129,6 +131,7 @@ def tpost(path, roles=None):
         _docs.append(dict(
             path=path,
             method='post',
+            func=func,
             params=doc_params,
         ))
 
@@ -343,21 +346,14 @@ def _nice_form(docs_params):
     return props
 
 
-def _get_doc_func(doc_path):
-    for route in apps().routes:
-        if route.rule == f"/{doc_path}":
-            return route.call
-    return
-
-
 def _get_rules(base, docs):
     rules = []
 
     for doc in docs:
-        doc_func = _get_doc_func(doc['path'])
+        doc_func = doc['func']
         rules.append(
             dict(
-                url=f"{base}/{doc['path']}",
+                url=f"{base}{doc['path']}",
                 path=doc["path"],
                 method=doc["method"],
                 doc=str(inspect.getdoc(doc_func) if inspect.getdoc(doc_func) else ""),
@@ -370,14 +366,18 @@ def _get_rules(base, docs):
 
 def install_docs(path, base):
     # It is important that this is at init else it wont work
+    this_dir, this_filename = os.path.split(__file__)
+    docs_path = os.path.join(this_dir, "docs.html")
     rules = _get_rules(base, _docs)
 
     @get(path)
     def mydocs_view():
-        with open("docs.html", "r") as f:
-            html = f.read().replace("{{DOCS_URL}}", f'{path}.json')
-            html = html.replace("{{DOCS_JSON}}", dumps(dict(rules=rules, base=base)))
-            return html
+        with open(docs_path, "r") as f:
+            tmpl = SimpleTemplate(f.read())
+            return tmpl.render(
+                rules=rules,
+                base=base,
+            )
 
 
 def install_cors(hosts):
