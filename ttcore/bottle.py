@@ -265,6 +265,10 @@ class ErrorHandler:
                 return body
             except NotFound404 as e:
                 return dict(msg=e.args[0])
+            except HTTPResponse as e:
+                response.status = getattr(e, "status", None)
+                response.headers.update(getattr(e, "headers", {}))
+                return getattr(e, "body", {"msg": "Something went wrong"})
             except:  # noqa
                 msg = f"{self.on_error()}\n\n{format_exc()}"
                 print(msg)
