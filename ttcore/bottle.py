@@ -368,11 +368,15 @@ def _get_rules(base, docs):
     return rules
 
 
-def install_docs(path, base):
+_default_docs = [{'path': '/api/fake_user_create', 'method': 'post', 'func': None, 'params': [{'name': 'email', 'param_type': 'str', 'required': True, 'default': 'N/A'}, {'name': 'phone', 'param_type': 'str', 'required': False, 'default': ''}, {'name': 'username', 'param_type': 'str', 'required': False, 'default': ''}, {'name': 'first_name', 'param_type': 'str', 'required': False, 'default': 'fake'}, {'name': 'last_name', 'param_type': 'str', 'required': False, 'default': ''}, {'name': 'description', 'param_type': 'str', 'required': False, 'default': ''}]}, {'path': '/api/fake_user_login', 'method': 'post', 'func': None, 'params': [{'name': 'email', 'param_type': 'str', 'required': True, 'default': 'N/A'}]}]
+
+
+def install_docs(path, base, filepath=None):
     # It is important that this is at init else it wont work
     this_dir, this_filename = os.path.split(__file__)
-    docs_path = os.path.join(this_dir, "docs.html")
-    rules = _get_rules(base, _docs)
+    docs_path = os.path.join(this_dir, "docs.html") if not filepath else filepath
+    docs_data = _docs if _docs else _default_docs
+    rules = _get_rules(base, docs_data)
 
     @get(path)
     def mydocs_view():
