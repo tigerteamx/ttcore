@@ -206,7 +206,7 @@
 							<div class="col-md-10">
 								<h2 class="rule-title mb-3">
 									{{ rule["path"] }}
-									({{ ', '.join(map(lambda item: item['name'] + ': ' + item['type'] + (' = "' + item['default'] + '"' if item['has_default'] else ''), rule['form'])) }})
+									({{ ', '.join(map(lambda rule: rule['name'] + ': ' + rule['type'] + (' = "' + str(rule['default']) + '"' if rule['has_default'] else ''), rule['form'])) }})
 								</h2>
 								<div class="text-holder">
 									% if rule["doc"]:
