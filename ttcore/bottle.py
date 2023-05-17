@@ -329,7 +329,7 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None):
 
 def _nice_form(docs_params):
     if not docs_params:
-        return None
+        return []
 
     props = []
     for prop in docs_params:
