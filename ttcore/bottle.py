@@ -139,7 +139,7 @@ def tpost(path, roles=None):
         @post(path)
         def wrapper(*args, **kwargs):
             if roles and not _auth(roles):
-                return HTTPResponse(status=403, body=dict(msg=f"Invalid access. Requires {', '.join(roles)}"))
+                return HTTPResponse(status=401, body=dict(msg=f"Invalid access. Requires {', '.join(roles)}"))
 
             data = _get_request_data() if len(params) > 0 else {}
             data = _filter_data(data, params)
