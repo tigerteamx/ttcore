@@ -42,11 +42,11 @@ Options:
 """
 
 
-def str2float(string):
+def str2int(string):
     try:
-        return float(string)
+        return int(string)
     except:  # noqa
-        raise Exception(f"{string} should be float type.")
+        raise Exception(f"{string} should be int type.")
 
 
 def read_config(config, mandatory_fields=[]):
@@ -74,7 +74,7 @@ def cli():
 
     if arguments['check_disk']:
         default_config = os.path.join(os.path.expanduser("~"), ".ttcore.json")
-        free_space = str2float(arguments['<space>']) if arguments['<space>'] else None
+        free_space = str2int(arguments['<space>']) if arguments['<space>'] else None
         config_path = arguments["--config"] if arguments["--config"] else default_config
 
         config = read_config(config_path, ["message"])
