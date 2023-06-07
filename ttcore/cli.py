@@ -4,7 +4,7 @@ import os
 import shutil
 
 
-def check_disk(path: str, space: float = None, message=None) -> str:
+def check_disk(path: str, space: int = None, message=None) -> str:
     total, used, free = shutil.disk_usage(path)
     percent_used = (used / total) * 100
     percent_free = (free / total) * 100
