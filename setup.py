@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ttcore",
-    version="0.1.8",
+    version="0.1.9",
     author="Martin F",
     author_email="pypi.org@tigerteamx.com",
     description="Atomic Batteries Included. Used by https://tigerteamx.com to maximize producitivty.",
@@ -23,6 +23,9 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    entry_points={
+        'console_scripts': ['ttcore = ttcore.cli:cli']
+    },
     keywords=['productivity', 'bottlepy', 'peewee'],
     python_requires='>=3.8',
     include_package_data=True,

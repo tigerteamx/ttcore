@@ -324,6 +324,8 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None):
         if post_fun and callable(post_fun):
             post_fun()
 
+        os.remove(zip_path)
+
         return "ok"
 
 
