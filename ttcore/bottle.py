@@ -305,7 +305,7 @@ def install_general(prefix='/'):
         return dict(msg="ok", content=read("version"))
 
 
-def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None):
+def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None, merge=False):
     @post(path)
     def deployer():
         if key and request.headers.get("Authorization", "") != f"apitoken {key}":
@@ -317,7 +317,9 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None):
         request.files.get("file").save(zip_path, overwrite=True)
 
         with ZipFile(zip_path, "r") as fh:
-            rmdir(output)
+            if not merge:
+                rmdir(output)
+
             mkdir(output)
             fh.extractall(output)
 
