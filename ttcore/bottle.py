@@ -434,6 +434,9 @@ def make_public(funcs, roles=None, prefix=""):
 def install_diskspace_checker(path, disk_path, space):
     @get(path)
     def diskspace_checker():
+        if not os.path.exists(disk_path):
+            return f"No such file or directory {disk_path}"
+
         total, used, free = shutil.disk_usage(disk_path)
         free_mb = free / (1024 ** 2) if free > 0 else 0
 
