@@ -8,6 +8,7 @@ from traceback import format_exc
 import inspect
 import time
 import os
+import shutil
 
 
 import peewee
@@ -428,4 +429,17 @@ def stopwatch(callback):
 def make_public(funcs, roles=None, prefix=""):
     for func in funcs:
         tpost(f"{prefix}/{func.__name__}", roles=roles)(func)
+
+
+def install_diskspace_checker(path, disk_path, space):
+    @get(path)
+    def diskspace_checker():
+        total, used, free = shutil.disk_usage(disk_path)
+        free_mb = free / (1024 ** 2) if free > 0 else 0
+
+        if free_mb < space:
+            return f"There is no free {space} MB left at {disk_path}."
+
+        return "ok"
+
 
