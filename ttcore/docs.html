@@ -140,24 +140,34 @@
 			vertical-align: baseline;
 			padding: 5px;
 		}
+		.sidebar .url-list {
+			overflow-y: auto;
+			overflow-x: hidden;
+			height: calc(100% - 40px);
+		}
 		.url-list {
-			padding: 0;
+			padding: 0 10px;
 			margin: 0;
 			list-style: none;
-		}
-		.url-list li {
-			margin-bottom: 10px;
+			display: block;
 		}
 		.url-list .found a {
 			background-color: #fff;
 		}
 		.url-list a {
-			border-radius: 5px;
-			padding: 5px;
+			padding: 7px 10px;
 			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			border-left: 2px solid #BDBDBD;
+		}
+		.url-list a.active {
+			border-left-color: #1565C0;
 		}
 		.sidebar {
 			background-color: #ddd;
+			height: 100%;
+			overflow: hidden;
 		}
 		.sidebar a {
 			color: #212121;
@@ -212,120 +222,112 @@
 		<main id="main">
 			<div class="container-fluid h-100">
 				<div class="row h-100">
-					<div class="col-md-2 py-4 sidebar scroll-bar">
-						<form action="#" @submit.prevent="search" class="mb-3">
-							<input @input="search" x-model="api_search" type="text" class="form-control" placeholder="Search by path">
+					<div id="rules-navbar" class="col-md-3 sidebar py-4">
+						<form action="#" @submit.prevent="search">
+							<input @input="search" x-model="api_search" type="text" class="form-control" placeholder="Search">
 						</form>
-						<ul class="url-list">
-							% for rule in rules :
-							<li>
-								<a href="#{{rule['path']}}">
+						<ul class="url-list nav position-relative">
+							% for index, rule in enumerate(rules):
+							<li class="nav-item">
+								<a class="nav-link" href="#rule-{{index}}">
 									{{ rule["path"] }}({{ ','.join(map(lambda item: item['name'], rule['form'])) }})
 								</a>
 							</li>
 							% end
 						</ul>
 					</div>
-					<div class="col-md-10 py-4 scroll-bar">
+					<div data-bs-spy="scroll" data-bs-target="#rules-navbar" data-bs-smooth-scroll="true" class="col-md-9 scroll-bar" tabindex="0">
 						% for index, rule in enumerate(rules):
-						<div class="row" id="{{rule['path']}}">
+						<div class="row py-4" id="rule-{{index}}">
 							<div class="col-md-10">
 								<h2 class="rule-title mb-3">
 									{{ rule["path"] }}
 									({{ ', '.join(map(lambda item: item['name'] + ': ' + item['type'] + (' = "' + str(item['default']) + '"' if item['has_default'] else ''), rule['form'])) }})
 								</h2>
-								<div class="collapse" id="collapse{{index}}">
-									<div class="text-holder">
-										% if rule["doc"]:
-										<p>{{rule["doc"]}}</p>
-										% else:
-										<p>Docs are planned to be here</p>
-										% end
-									</div>
-									<form x-ref="myform" x-on:submit.prevent="sendRequest(`{{rule}}`, $event)" action="#" class="form-box">
-										<h4 class="mb-3">Try it:</h4>
-										% for item in rule['form'] :
-										<div>
-											% if item["type"] == "str" or item["type"] == "integer":
-											<label class="label mb-3">
-												<span class="fake-label">{{item["name"]}} \\
-													% if item["required"]:
-													<sup class="text-danger">*</sup>\\
-													% end
-												</span>
-												<input type="text" class="form-control" value="{{item['default']}}" name="{{item['name']}}">
+								<div class="text-holder">
+									% if rule["doc"]:
+									<p>{{rule["doc"]}}</p>
+									% else:
+									<p>Docs are planned to be here</p>
+									% end
+								</div>
+								<form x-ref="myform" x-on:submit.prevent="sendRequest(`{{rule}}`, $event)" action="#" class="form-box">
+									<h4 class="mb-3">Try it:</h4>
+									% for item in rule['form'] :
+									<div>
+										% if item["type"] == "str" or item["type"] == "integer":
+										<label class="label mb-3">
+											<span class="fake-label">{{item["name"]}} \\
+												% if item["required"]:
+												<sup class="text-danger">*</sup>\\
+												% end
+											</span>
+											<input type="text" class="form-control" value="{{item['default']}}" name="{{item['name']}}">
+										</label>
+										% elif item["type"] == "boolean":
+										<div class="form-check mb-3">
+											<input class="form-check-input" type="checkbox" value="{{item['default']}}" id="{{item['name']}}">
+											<label class="form-check-label" for="{{item['name']}}">{{item["name"]}}
+												% if item["required"]:
+												<sup class="text-danger">*</sup>
+												% end
 											</label>
-											% elif item["type"] == "boolean":
-											<div class="form-check mb-3">
-												<input class="form-check-input" type="checkbox" value="{{item['default']}}" id="{{item['name']}}">
-												<label class="form-check-label" for="{{item['name']}}">{{item["name"]}}
+										</div>
+										% elif item["type"] == 'array':
+										<div class="label mb-3">
+											<div class="d-flex align-items-center mb-2">
+												<span class="fake-label mb-0">{{item["name"]}}
 													% if item["required"]:
 													<sup class="text-danger">*</sup>
 													% end
-												</label>
+												</span>
+												<a href="#" class="btn btn-dark btn-sm ms-2" @click.prevent="addItem(item)">+</a>
 											</div>
-											% elif item["type"] == 'array':
-											<div class="label mb-3">
-												<div class="d-flex align-items-center mb-2">
-													<span class="fake-label mb-0">{{item["name"]}}
-														% if item["required"]:
-														<sup class="text-danger">*</sup>
-														% end
-													</span>
-													<a href="#" class="btn btn-dark btn-sm ms-2" @click.prevent="addItem(item)">+</a>
-												</div>
-												% for (subitem, j) in item['default'] :
-												<div class="row mb-1 align-items-end">
-													% for (value, key) in subitem :
-													<div class="col-md-5">
-														<label class="label mb-0">
-															<span class="fake-label">{{(value, key)}}</span>
-															<input type="text" class="form-control" value="{{subitem[key]}}">
-														</label>
-													</div>
-													% end
-													<div class="col-md-1 offset-md-1">
-														<a href="#" class="btn btn-dark btn-sm mb-1 w-100" @click.prevent="removeItem(item.default, j)">-</a>
-													</div>
+											% for (subitem, j) in item['default'] :
+											<div class="row mb-1 align-items-end">
+												% for (value, key) in subitem :
+												<div class="col-md-5">
+													<label class="label mb-0">
+														<span class="fake-label">{{(value, key)}}</span>
+														<input type="text" class="form-control" value="{{subitem[key]}}">
+													</label>
 												</div>
 												% end
-											</div>
-											% elif item["type"] == 'object':
-											<div class="mb-3">
-												<div class="d-flex align-items-center mb-2">
-													<span class="fake-label mb-0">{{item["name"]}}
-														% if item["required"]:
-														<sup class="text-danger">*</sup>
-														% end
-													</span>
-													% if not item['default']:
-													<a href="#" class="btn btn-dark btn-sm ms-2" @click.prevent="addObject(item)">+</a>
-													% end
-												</div>
-												<div class="row mb-1">
-													% for (value, key) in item['default']:
-													<div class="col-md-6">
-														<label class="label">
-															<span class="fake-label">{{key}}</span>
-															<input type="text" class="form-control" value="{{item['default'][key]}}">
-														</label>
-													</div>
-													% end
+												<div class="col-md-1 offset-md-1">
+													<a href="#" class="btn btn-dark btn-sm mb-1 w-100" @click.prevent="removeItem(item.default, j)">-</a>
 												</div>
 											</div>
 											% end
 										</div>
+										% elif item["type"] == 'object':
+										<div class="mb-3">
+											<div class="d-flex align-items-center mb-2">
+												<span class="fake-label mb-0">{{item["name"]}}
+													% if item["required"]:
+													<sup class="text-danger">*</sup>
+													% end
+												</span>
+												% if not item['default']:
+												<a href="#" class="btn btn-dark btn-sm ms-2" @click.prevent="addObject(item)">+</a>
+												% end
+											</div>
+											<div class="row mb-1">
+												% for (value, key) in item['default']:
+												<div class="col-md-6">
+													<label class="label">
+														<span class="fake-label">{{key}}</span>
+														<input type="text" class="form-control" value="{{item['default'][key]}}">
+													</label>
+												</div>
+												% end
+											</div>
+										</div>
 										% end
-										<input type="submit" class="btn btn-dark">
-									</form>
-									<div class="extra-space pb-5 mb-5"></div>
-								</div>
-							</div>
-							<div class="col-md-2">
-								<a class="btn btn-dark btn-switch collapsed" data-bs-toggle="collapse" href="#collapse{{index}}" role="button" aria-expanded="false" aria-controls="collapse{{index}}">
-									<span class="show">Show</span>
-									<span class="hide">Hide</span>
-								</a>
+									</div>
+									% end
+									<input type="submit" class="btn btn-dark">
+								</form>
+								<div class="extra-space pb-5 mb-5"></div>
 							</div>
 						</div>
 						% end
@@ -387,6 +389,14 @@
 						} else {
 							item.classList.remove('found')
 						}
+					})
+
+					var foundEl = document.querySelector('.found')
+					if(!foundEl) return false
+
+					document.querySelector('.sidebar .url-list').scrollTo({
+						top: foundEl.offsetTop,
+						behavior: "smooth",
 					})
 				},
 				sendRequest(rule, e) {
