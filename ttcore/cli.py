@@ -2,6 +2,8 @@
 
 import os
 import shutil
+import base64
+import json
 
 
 def check_disk(path: str, space: int = None, message=None) -> str:
@@ -32,16 +34,6 @@ def check_disk(path: str, space: int = None, message=None) -> str:
     return msg
 
 
-doc = """ttcore
-
-Usage:
-  ttcore check_disk <path> [<space>] [--config=<config>]
-
-Options:
-  -h --help     Show this screen.
-"""
-
-
 def str2int(string):
     try:
         return int(string)
@@ -65,14 +57,64 @@ def read_config(config, mandatory_fields=[]):
     return content
 
 
+def create_fernet(password):
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=b"salt", iterations=100000, backend=default_backend())
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
+    return Fernet(key)
+
+
+def get_password(password):
+    if not password:
+        password = input("Password: ")
+
+    return password
+
+
+def encrypt(value, password):
+    fernet = create_fernet(password)
+    res_value = fernet.encrypt(value.encode()).decode()
+    return res_value
+
+
+def decrypt(value, password):
+    from cryptography.fernet import InvalidToken
+
+    try:
+        fernet = create_fernet(password)
+        res_value = fernet.decrypt(value.encode()).decode()
+        return res_value
+    except InvalidToken:
+        print("Wrong password")
+
+
+doc = """ttcore
+
+Usage:
+  ttcore check_disk <path> [<space>] [--config=<config>]
+  ttcore encrypt <value> [<password>]
+  ttcore decrypt <value> [<password>]
+  ttcore encrypt_file <path> [--new_path=<new_path>] [--password=<password>]
+  ttcore decrypt_file <path> [--new_path=<new_path>] [--password=<password>]
+
+Options:
+  -h --help     Show this screen.
+"""
+
+
 def cli():
     from docopt import docopt
-
-    from .messages import init_message
 
     arguments = docopt(doc)
 
     if arguments['check_disk']:
+        from .messages import init_message
+
         default_config = os.path.join(os.path.expanduser("~"), ".ttcore.json")
         free_space = str2int(arguments['<space>']) if arguments['<space>'] else None
         config_path = arguments["--config"] if arguments["--config"] else default_config
@@ -81,6 +123,46 @@ def cli():
         message = init_message(config["message"])
 
         check_disk(arguments['<path>'], free_space, message)
+
+    if arguments['encrypt']:
+        password = get_password(arguments['<password>'])
+        res_value = encrypt(arguments['<value>'], password)
+        print(res_value)
+
+    if arguments['decrypt']:
+        password = get_password(arguments['<password>'])
+        res_value = decrypt(arguments['<value>'], password)
+        print(res_value)
+
+    if arguments['encrypt_file']:
+        password = get_password(arguments['--password'])
+        data = read_config(arguments['<path>'])
+
+        for key, value in data.items():
+            if value.startswith("gAAAAA"):
+                continue
+
+            data[key] = encrypt(value, password)
+
+        output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
+
+        with open(output_path, 'w') as f:
+            f.write(json.dumps(data))
+
+    if arguments['decrypt_file']:
+        password = get_password(arguments['--password'])
+        data = read_config(arguments['<path>'])
+
+        for key, value in data.items():
+            if not value.startswith("gAAAAA"):
+                continue
+
+            data[key] = decrypt(value, password)
+
+        output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
+
+        with open(output_path, 'w') as f:
+            f.write(json.dumps(data))
 
 
 if __name__ == "__main__":
