@@ -2,8 +2,10 @@
 
 import os
 import shutil
-import base64
-import json
+from json import dumps
+from getpass import getpass
+
+from .utils import read_config
 
 
 def check_disk(path: str, space: int = None, message=None) -> str:
@@ -41,56 +43,11 @@ def str2int(string):
         raise Exception(f"{string} should be int type.")
 
 
-def read_config(config, mandatory_fields=[]):
-    from json import loads
-
-    if not os.path.isfile(config):
-        raise Exception(f"{config} doesn't exist.")
-
-    with open(config, "r") as f:
-        content = loads(f.read())
-
-    for field in mandatory_fields:
-        if field not in content:
-            raise Exception(f"There is no {field} field found in the {config} file.")
-
-    return content
-
-
-def create_fernet(password):
-    from cryptography.fernet import Fernet
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=b"salt", iterations=100000, backend=default_backend())
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-
-    return Fernet(key)
-
-
 def get_password(password):
     if not password:
-        password = input("Password: ")
+        password = getpass("Password: ")
 
     return password
-
-
-def encrypt(value, password):
-    fernet = create_fernet(password)
-    res_value = fernet.encrypt(value.encode()).decode()
-    return res_value
-
-
-def decrypt(value, password):
-    from cryptography.fernet import InvalidToken
-
-    try:
-        fernet = create_fernet(password)
-        res_value = fernet.decrypt(value.encode()).decode()
-        return res_value
-    except InvalidToken:
-        print("Wrong password")
 
 
 doc = """ttcore
@@ -99,8 +56,9 @@ Usage:
   ttcore check_disk <path> [<space>] [--config=<config>]
   ttcore encrypt <value> [<password>]
   ttcore decrypt <value> [<password>]
-  ttcore encrypt_file <path> [--new_path=<new_path>] [--password=<password>]
-  ttcore decrypt_file <path> [--new_path=<new_path>] [--password=<password>]
+  ttcore encrypt_file <path> [--new_path=<new_path>] [--password=<password>] [--depth=<depth>]
+  ttcore decrypt_file <path> [--new_path=<new_path>] [--password=<password>] [--depth=<depth>]
+  ttcore deploy_config <path> <remote_path> <host> [--password=<password>] [--depth=<depth>]
 
 Options:
   -h --help     Show this screen.
@@ -125,44 +83,58 @@ def cli():
         check_disk(arguments['<path>'], free_space, message)
 
     if arguments['encrypt']:
+        from .utils import encrypt
+
         password = get_password(arguments['<password>'])
         res_value = encrypt(arguments['<value>'], password)
         print(res_value)
 
     if arguments['decrypt']:
+        from .utils import decrypt
+
         password = get_password(arguments['<password>'])
         res_value = decrypt(arguments['<value>'], password)
         print(res_value)
 
     if arguments['encrypt_file']:
+        from .utils import encrypt_dict
+
         password = get_password(arguments['--password'])
-        data = read_config(arguments['<path>'])
-
-        for key, value in data.items():
-            if value.startswith("gAAAAA"):
-                continue
-
-            data[key] = encrypt(value, password)
-
+        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
+        config = read_config(arguments['<path>'])
+        data = encrypt_dict(config, password, depth)
         output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
 
         with open(output_path, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(dumps(data))
 
     if arguments['decrypt_file']:
+        from .utils import decrypt_dict
+
         password = get_password(arguments['--password'])
-        data = read_config(arguments['<path>'])
-
-        for key, value in data.items():
-            if not value.startswith("gAAAAA"):
-                continue
-
-            data[key] = decrypt(value, password)
-
+        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
+        config = read_config(arguments['<path>'])
+        data = decrypt_dict(config, password, depth)
         output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
 
         with open(output_path, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(dumps(data))
+
+    if arguments['deploy_config']:
+        from .utils import decrypt_dict, encrypt_dict
+
+        password = get_password(arguments['--password'])
+        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
+        config = read_config(arguments['<path>'])
+        decrypted_config = decrypt_dict(config, password, depth)
+
+        with open(arguments['<path>'], 'w') as f:
+            f.write(dumps(decrypted_config))
+
+        os.system(f"scp {arguments['<path>']} {arguments['<host>']}:{arguments['<remote_path>']}")
+
+        with open(arguments['<path>'], 'w') as f:
+            f.write(dumps(config))
 
 
 if __name__ == "__main__":
