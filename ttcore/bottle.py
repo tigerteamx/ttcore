@@ -308,6 +308,13 @@ def install_general(prefix='/'):
         return dict(msg="ok", content=read("version"))
 
 
+def _cleanup_temp_files(destination_path):
+    for root, dirs, files in os.walk(destination_path):
+        for filename in files:
+            if filename.startswith("tmp") and "." not in filename:
+                os.remove(f"{root}/{filename}")
+
+
 def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None, merge=False):
     @post(path)
     def deployer():
@@ -329,6 +336,9 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None, mer
 
             if post_fun and callable(post_fun):
                 post_fun()
+
+            destination_path = "/".join(zip_path.split("/")[:-2])
+            _cleanup_temp_files(destination_path)
 
         return "ok"
 
