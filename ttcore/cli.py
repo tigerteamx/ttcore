@@ -56,9 +56,8 @@ Usage:
   ttcore check_disk <path> [<space>] [--config=<config>]
   ttcore encrypt <value> [<password>]
   ttcore decrypt <value> [<password>]
-  ttcore encrypt_file <path> [--new_path=<new_path>] [--password=<password>] [--depth=<depth>]
-  ttcore decrypt_file <path> [--new_path=<new_path>] [--password=<password>] [--depth=<depth>]
-  ttcore deploy_config <path> <remote_path> <host> [--password=<password>] [--depth=<depth>]
+  ttcore encrypt_file <path> [--output_path=<output_path>] [--password=<password>] [--depth=<depth>]
+  ttcore decrypt_file <path> [--output_path=<output_path>] [--password=<password>] [--depth=<depth>]
 
 Options:
   -h --help     Show this screen.
@@ -103,7 +102,7 @@ def cli():
         depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
         config = read_config(arguments['<path>'])
         data = encrypt_dict(config, password, depth)
-        output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
+        output_path = arguments['--output_path'] if arguments['--output_path'] else arguments['<path>']
 
         with open(output_path, 'w') as f:
             f.write(dumps(data))
@@ -115,26 +114,10 @@ def cli():
         depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
         config = read_config(arguments['<path>'])
         data = decrypt_dict(config, password, depth)
-        output_path = arguments['--new_path'] if arguments['--new_path'] else arguments['<path>']
+        output_path = arguments['--output_path'] if arguments['--output_path'] else arguments['<path>']
 
         with open(output_path, 'w') as f:
             f.write(dumps(data))
-
-    if arguments['deploy_config']:
-        from .utils import decrypt_dict, encrypt_dict
-
-        password = get_password(arguments['--password'])
-        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
-        config = read_config(arguments['<path>'])
-        decrypted_config = decrypt_dict(config, password, depth)
-
-        with open(arguments['<path>'], 'w') as f:
-            f.write(dumps(decrypted_config))
-
-        os.system(f"scp {arguments['<path>']} {arguments['<host>']}:{arguments['<remote_path>']}")
-
-        with open(arguments['<path>'], 'w') as f:
-            f.write(dumps(config))
 
 
 if __name__ == "__main__":
