@@ -1,4 +1,5 @@
 from zipfile import ZipFile
+import tempfile
 from uuid import uuid4
 from functools import wraps
 from inspect import signature
@@ -315,20 +316,19 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None, mer
                 on_invalid_key()
             return "no access"
 
-        zip_path = f'/tmp/deployer-{uuid4()}.zip'
-        request.files.get("file").save(zip_path, overwrite=True)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            zip_path = os.path.join(tmp_dir, f'deployer-{uuid4()}.zip')
+            request.files.get("file").save(zip_path, overwrite=True)
 
-        with ZipFile(zip_path, "r") as fh:
-            if not merge:
-                rmdir(output)
+            with ZipFile(zip_path, "r") as fh:
+                if not merge:
+                    rmdir(output)
 
-            mkdir(output)
-            fh.extractall(output)
+                mkdir(output)
+                fh.extractall(output)
 
-        if post_fun and callable(post_fun):
-            post_fun()
-
-        os.remove(zip_path)
+            if post_fun and callable(post_fun):
+                post_fun()
 
         return "ok"
 
