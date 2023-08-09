@@ -2,6 +2,10 @@
 
 import os
 import shutil
+from json import dumps
+from getpass import getpass
+
+from .utils import read_config
 
 
 def check_disk(path: str, space: int = None, message=None) -> str:
@@ -32,16 +36,6 @@ def check_disk(path: str, space: int = None, message=None) -> str:
     return msg
 
 
-doc = """ttcore
-
-Usage:
-  ttcore check_disk <path> [<space>] [--config=<config>]
-
-Options:
-  -h --help     Show this screen.
-"""
-
-
 def str2int(string):
     try:
         return int(string)
@@ -49,30 +43,35 @@ def str2int(string):
         raise Exception(f"{string} should be int type.")
 
 
-def read_config(config, mandatory_fields=[]):
-    from json import loads
+def get_password(password):
+    if not password:
+        password = getpass("Password: ")
 
-    if not os.path.isfile(config):
-        raise Exception(f"{config} doesn't exist.")
+    return password
 
-    with open(config, "r") as f:
-        content = loads(f.read())
 
-    for field in mandatory_fields:
-        if field not in content:
-            raise Exception(f"There is no {field} field found in the {config} file.")
+doc = """ttcore
 
-    return content
+Usage:
+  ttcore check_disk <path> [<space>] [--config=<config>]
+  ttcore encrypt <value> [<password>]
+  ttcore decrypt <value> [<password>]
+  ttcore encrypt_file <path> [--output_path=<output_path>] [--password=<password>] [--depth=<depth>]
+  ttcore decrypt_file <path> [--output_path=<output_path>] [--password=<password>] [--depth=<depth>]
+
+Options:
+  -h --help     Show this screen.
+"""
 
 
 def cli():
     from docopt import docopt
 
-    from .messages import init_message
-
     arguments = docopt(doc)
 
     if arguments['check_disk']:
+        from .messages import init_message
+
         default_config = os.path.join(os.path.expanduser("~"), ".ttcore.json")
         free_space = str2int(arguments['<space>']) if arguments['<space>'] else None
         config_path = arguments["--config"] if arguments["--config"] else default_config
@@ -81,6 +80,44 @@ def cli():
         message = init_message(config["message"])
 
         check_disk(arguments['<path>'], free_space, message)
+
+    if arguments['encrypt']:
+        from .utils import encrypt
+
+        password = get_password(arguments['<password>'])
+        res_value = encrypt(arguments['<value>'], password)
+        print(res_value)
+
+    if arguments['decrypt']:
+        from .utils import decrypt
+
+        password = get_password(arguments['<password>'])
+        res_value = decrypt(arguments['<value>'], password)
+        print(res_value)
+
+    if arguments['encrypt_file']:
+        from .utils import encrypt_dict
+
+        password = get_password(arguments['--password'])
+        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
+        config = read_config(arguments['<path>'])
+        data = encrypt_dict(config, password, depth)
+        output_path = arguments['--output_path'] if arguments['--output_path'] else arguments['<path>']
+
+        with open(output_path, 'w') as f:
+            f.write(dumps(data))
+
+    if arguments['decrypt_file']:
+        from .utils import decrypt_dict
+
+        password = get_password(arguments['--password'])
+        depth = str2int(arguments['--depth']) if arguments['--depth'] else 2
+        config = read_config(arguments['<path>'])
+        data = decrypt_dict(config, password, depth)
+        output_path = arguments['--output_path'] if arguments['--output_path'] else arguments['<path>']
+
+        with open(output_path, 'w') as f:
+            f.write(dumps(data))
 
 
 if __name__ == "__main__":
