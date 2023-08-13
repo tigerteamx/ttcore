@@ -4,7 +4,10 @@ import re
 import json as _json_internal
 from decimal import Decimal
 from datetime import datetime, date
+import base64
 import unicodedata
+import os
+from traceback import format_exc
 
 
 def mkdir(path):
@@ -124,3 +127,82 @@ def str_or_exception(d, key):
 
     raise Exception(f"Expected {key} but not found")
 
+
+def read_config(config, mandatory_fields=[]):
+    if not os.path.isfile(config):
+        raise Exception(f"{config} doesn't exist.")
+
+    with open(config, "r") as f:
+        content = loads(f.read())
+
+    for field in mandatory_fields:
+        if field not in content:
+            raise Exception(f"There is no {field} field found in the {config} file.")
+
+    return content
+
+
+def create_fernet(password):
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=b"salt", iterations=100000, backend=default_backend())
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
+    return Fernet(key)
+
+
+def encrypt(value, password):
+    try:
+        fernet = create_fernet(password)
+        res_value = fernet.encrypt(value.encode()).decode()
+        return res_value
+    except:  # noqa
+        print("Something went wrong", format_exc())
+
+    return value
+
+
+def decrypt(value, password):
+    from cryptography.fernet import InvalidToken
+
+    try:
+        fernet = create_fernet(password)
+        res_value = fernet.decrypt(value.encode()).decode()
+        return res_value
+    except InvalidToken:
+        print("Wrong password")
+    except: # noqa
+        print("Something went wrong", format_exc())
+
+    return value
+
+
+def encrypt_dict(data, password, max_depth, current_depth=0):
+    encrypted_data = {}
+
+    for key, value in data.items():
+        if isinstance(value, dict) and current_depth < max_depth:
+            encrypted_data[key] = encrypt_dict(value, password, max_depth, current_depth + 1)
+        elif isinstance(value, str) and not value.startswith("gAAAAA"):
+            encrypted_data[key] = encrypt(value, password)
+        else:
+            encrypted_data[key] = value
+
+    return encrypted_data
+
+
+def decrypt_dict(data, password, max_depth, current_depth=0):
+    decrypted_data = {}
+
+    for key, value in data.items():
+        if isinstance(value, dict) and current_depth < max_depth:
+            decrypted_data[key] = decrypt_dict(value, password, max_depth, current_depth + 1)
+        elif isinstance(value, str) and value.startswith("gAAAAA"):
+            decrypted_data[key] = decrypt(value, password)
+        else:
+            decrypted_data[key] = value
+
+    return decrypted_data
