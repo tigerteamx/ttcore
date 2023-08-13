@@ -330,6 +330,8 @@ def install_deploy(path, output, key="", on_invalid_key=None, post_fun=None, mer
             if post_fun and callable(post_fun):
                 post_fun()
 
+            request.body.close()
+
         return "ok"
 
 
@@ -445,5 +447,4 @@ def install_diskspace_checker(path, disk_path, space):
             return f"There is no free {space} MB left at {disk_path}."
 
         return "ok"
-
 
