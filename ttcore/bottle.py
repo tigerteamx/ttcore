@@ -126,7 +126,7 @@ def _set_context(ctx, params, data):
     return data
 
 
-def tpost(path, roles=None):
+def tpost(path, auth_func=None, roles=None):
     def decorator(func):
         params = signature(func).parameters
         doc_params = _get_doc_params(params)
@@ -140,8 +140,16 @@ def tpost(path, roles=None):
         @wraps(func)
         @post(path)
         def wrapper(*args, **kwargs):
-            if roles and not _auth(roles):
-                return HTTPResponse(status=401, body=dict(msg=f"Invalid access. Requires {', '.join(roles)}"))
+            if auth_func and callable(auth_func):
+                valid_auth = auth_func(roles) if roles else auth_func()
+            else:
+                valid_auth = _auth(roles) if roles else True
+
+            if not valid_auth:
+                return HTTPResponse(
+                    status=401,
+                    body=dict(msg=f"Invalid access.{' Requires ' + ','.join(roles) if roles else ''}")
+                )
 
             req_data = _get_request_data()
             data = req_data if req_data and len(params) > 0 else {}
@@ -429,9 +437,9 @@ def stopwatch(callback):
     return wrapper
 
 
-def make_public(funcs, roles=None, prefix=""):
+def make_public(funcs, auth_func=None, roles=None, prefix=""):
     for func in funcs:
-        tpost(f"{prefix}/{func.__name__}", roles=roles)(func)
+        tpost(f"{prefix}/{func.__name__}", auth_func=auth_func, roles=roles)(func)
 
 
 def install_diskspace_checker(path, disk_path, space):
