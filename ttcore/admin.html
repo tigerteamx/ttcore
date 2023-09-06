@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width initial-scale=1 maximum-scale=1" />
+	<title>Admin</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="admin_static/style.css"/>
+</head>
+<body>
+	<div id="app">
+		<header id="header">
+			<div class="container-full-w">
+				<strong class="logo">
+					<a href="#">
+						<img src="admin_static/logo-black.png" alt="Developments.es">
+					</a>
+				</strong>
+			</div>
+		</header>
+		<main id="main">
+			<div class="common-content column">
+				<ul class="models-list">
+					<li v-for="(model, m) in models" :key="m">
+						<a href="#" @click.prevent="openModel(model)">{{ model.model }}</a>
+					</li>
+				</ul>
+			</div>
+			<div class="main-content">
+				<div v-if="modelResults" class="content-holder">
+					<div class="table-holder column">
+						<div class="header-holder">
+							<h1>{{ showModel.model }}</h1>
+							<div class="d-flex">
+								<form action="#" class="search-form" @submit.prevent="searchModelsBasic(search)">
+									<input type="text" class="form-control" v-model="search">
+									<button type="submit" class="btn">Search</button>
+								</form>
+								<a href="#" class="btn" @click.prevent="addNewModel">Add new</a>
+							</div>
+						</div>
+						<table class="table">
+							<thead>
+								<tr>
+									<th
+										v-for="(header, h) in commonHeaders"
+										:key="h"
+									>{{ header }}</th>
+									<th> </th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(item, i) in modelResults" :key="i">
+									<td
+										v-for="(header, h) in commonHeaders"
+										:key="h"
+									>
+										<span v-if="header == 'updated'">{{ formatDate(item[header]) }}</span>
+										<span v-else>{{ item[header] }}</span>
+									</td>
+									<td>
+										<a href="#" @click.prevent="editModelInfo(item)" class="btn">Edit</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<ul class="pagination">
+							<li v-if="page != 1">
+								<a href="#" @click.prevent="goTo(1)">|&#60;</a>
+							</li>
+							<li v-if="page > 1">
+								<a href="#" @click.prevent="goPrev">&#60;</a>
+							</li>
+							<li
+								:class="[page == i ? 'active' : '']"
+								v-for="i in pages"
+								:key="i"
+							>
+								<a href="#" @click.prevent="goTo(i)">{{ i }}</a>
+							</li>
+							<li v-if="page < no_pages">
+								<a href="#" @click.prevent="goNext">&#62;</a>
+							</li>
+							<li v-if="page != no_pages">
+								<a href="#" @click.prevent="goTo(no_pages)">&#62;|</a>
+							</li>
+						</ul>
+					</div>
+					<div class="edit-block column" v-if="editModel">
+						<div class="header-holder">
+							<h3>Edit</h3>
+							<a href="#" class="btn btn-outline btn-close" @click.prevent="closeModelInfo">Close</a>
+						</div>
+						<form action="#" class="edit-form">
+							<label
+								v-for="(item, i) in editModel"
+								:key="i"
+								:class="typeof editModel[i]"
+							>
+								<input
+									v-if="typeof editModel[i] == 'boolean'"
+									type="checkbox"
+									v-model="editModel[i]"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+								<span class="form-control readonly" v-else-if="i == 'created' || i == 'updated'">
+									{{ formatDate(editModel[i]) }}
+								</span>
+								<select
+									v-else-if="i == 'status' && showModel.model == 'Development'"
+									class="form-control"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									v-model="editModel[i]"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+									<option
+										v-for="(choice, c) in statusDevelopmentChoice"
+										:key="c"
+										:value="choice"
+									>{{ choice }}</option>
+								</select>
+								<select
+									v-else-if="i == 'license' && showModel.model == 'Development'"
+									class="form-control"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									v-model="editModel[i]"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+									<option
+										v-for="choice in licenseDevelopmentChoice"
+										:key="choice.code"
+										:value="choice.code"
+									>{{ choice.label }}</option>
+								</select>
+								<select
+									v-else-if="i == 'commission_paid' && showModel.model == 'Development'"
+									class="form-control"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									v-model="editModel[i]"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+									<option
+										v-for="(choice, c) in commissionDevelopmentChoice"
+										:key="c"
+										:value="choice"
+									>{{ choice }}</option>
+								</select>
+								<select
+									v-else-if="i == 'type' && showModel.model == 'Tag'"
+									class="form-control"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									v-model="editModel[i]"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+									<option
+										v-for="choice in typeTagChoice"
+										:key="choice.code"
+										:value="choice.code"
+									>{{ choice.label }}</option>
+								</select>
+								<input
+									v-else
+									type="text"
+									class="form-control"
+									v-model="editModel[i]"
+									:readonly="showModel.non_edit_fields.indexOf(i) >= 0"
+									:required="showModel.required_fields.indexOf(i) >= 0"
+									@change="changeModelInfo(i, editModel[i])"
+								>
+								<span class="fake-label">{{ i }} <sup v-if="showModel.required_fields.indexOf(i) >= 0">*</sup></span>
+							</label>
+						</form>
+					</div>
+					<div class="edit-block column" v-if="newModel">
+						<div class="header-holder">
+							<h3>New</h3>
+							<a href="#" class="btn btn-outline btn-close" @click.prevent="closeNewModel">Close</a>
+						</div>
+						<form action="#" class="edit-form" @submit.prevent="createModel">
+							<label
+								v-for="(item, i) in newModel"
+								:key="i"
+								:class="typeof newModel[i]"
+							>
+								<input
+									v-if="typeof newModel[i] == 'boolean'"
+									type="checkbox"
+									v-model="newModel[i]"
+									:required="true"
+								>
+								<input
+									v-else
+									type="text"
+									class="form-control"
+									v-model="newModel[i]"
+									:required="true"
+								>
+								<span class="fake-label">{{ i }} <sup>*</sup></span>
+							</label>
+							<button type="submit" class="btn">Create</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</main>
+		<div class="flash-holder">
+			<div
+				v-for="(msg, m) in messages"
+				:key="m"
+				:class="[`flash-${msg.state} flash`]"
+			>
+				<p>{{ msg.message }}</p>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js" defer></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js" defer></script>
+<script src="https://unpkg.com/vue-router@4" defer></script>
+<script type="module">
+	const { createApp } = Vue
+	const Home = { template: '<div>Might be imported from file</div>' }
+	import Script from './admin_static/script.js'
+	const routes = [
+		{ path: '/', component: Home }
+	]
+	const router = VueRouter.createRouter({
+		history: VueRouter.createWebHistory(),
+		routes,
+	})
+	const app = createApp(Script)
+
+	app.config.globalProperties.$api = axios.create({
+		baseURL: 'https://xapi.newbuildproperties.com/',
+		timeout: 8000
+	});
+
+	if(localStorage.getItem('token')) {
+		var token = localStorage.getItem('token');
+		app.config.globalProperties.$api.defaults.headers.common['Authorization'] = `bearer ${token}`
+	}
+
+	app.use(router).mount('#app')
+</script>
+</html>

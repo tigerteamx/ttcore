@@ -13,7 +13,7 @@ import shutil
 
 
 import peewee
-from bottle import request, post, get, hook, response, HTTPResponse, default_app, route, SimpleTemplate
+from bottle import request, post, get, hook, response, HTTPResponse, default_app, route, SimpleTemplate, static_file
 
 
 from .utils import mkdir, rmdir, read, is_ip4, dumps
@@ -398,6 +398,20 @@ def install_docs(path, base):
                 rules=rules,
                 base=base,
             )
+
+
+def install_admin(path):
+    this_dir, this_filename = os.path.split(__file__)
+    admin_path = os.path.join(this_dir, "admin.html")
+
+    @get(f'/admin_static/<filepath:path>')
+    def admin_static(filepath):
+        return static_file(filepath, root=os.path.join(this_dir, 'admin_assets'))
+
+    @get(path)
+    def mydocs_view():
+        with open(admin_path, "r") as f:
+            return f.read()
 
 
 def install_cors(hosts):
