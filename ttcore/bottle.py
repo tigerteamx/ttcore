@@ -231,12 +231,13 @@ def formatted_headers() -> str:
 
 class ErrorHandler:
     def __init__(
-        self, message, max_request_per_minute=10, on_error=None
+        self, message, max_request_per_minute=10, on_error=None, on_log=None,
     ):
         self._recent_msgs = []
         self.max_request_per_minute = max_request_per_minute
         self.message = message
-        self.on_error = on_error if on_error else self._on_error
+        self.on_error = on_error if on_error else self._on_error  # it is a message generator
+        self.on_log = on_log
 
     def _on_error(self):
         msg = ""
@@ -250,6 +251,10 @@ class ErrorHandler:
             )
 
         return msg
+
+    def log_error(self, data):
+        if self.on_log and callable(self.on_log):
+            self.on_log(data)
 
     def on_msg(self, msg: str):
         current_date = datetime.now()
@@ -277,6 +282,7 @@ class ErrorHandler:
                 print(msg)
                 self.on_msg(msg)
                 self._recent_msgs.append(datetime.now())
+                self.log_error(msg)
                 return {"msg": "Internal Error"}
 
         return wrapper
