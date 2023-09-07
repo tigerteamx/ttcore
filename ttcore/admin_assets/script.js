@@ -31,7 +31,7 @@ export default {
 	methods: {
 		showFlash(msg, status = 'info', delay = 3000) {
 			this.messages.push({message: msg, state: status});
-			
+
 			setTimeout(() => {
 				this.messages.shift();
 			}, delay);
@@ -41,7 +41,7 @@ export default {
 				name: model,
 				page: this.page
 			}
-			
+
 			if(q) {
 				data['q'] = q;
 			}
@@ -93,7 +93,8 @@ export default {
 			})
 		},
 		openModel(model) {
-			this.$router.push({query: { model: model.model }})
+			this.redirectSetup({ model: model.model })
+			//this.$router.push({query: { model: model.model }})
 			this.showModel = model
 			this.editModel = null
 			this.newModel = null
@@ -101,7 +102,8 @@ export default {
 			this.searchModelsBasic()
 		},
 		editModelInfo(item) {
-			this.$router.push({query: { model: this.showModel.model, edit: item.pid }})
+			this.redirectSetup({ model: this.showModel.model, edit: item.pid })
+			//this.$router.push({query: { model: this.showModel.model, edit: item.pid }})
 			this.editModel = item
 			this.newModel = null
 		},
@@ -111,7 +113,8 @@ export default {
 		},
 		closeModelInfo() {
 			this.editModel = null
-			this.$router.push({query: { model: this.showModel.model }})
+			this.redirectSetup({ model: this.showModel.model })
+			//this.$router.push({query: { model: this.showModel.model }})
 		},
 		initCheck() {
 			if(this.modelDetail) {
@@ -127,9 +130,16 @@ export default {
 
 			if(!this.modelDetail && !this.modelDetailInfo) {
 				this.showModel = this.models[0]
-				this.$router.push({query: { model: this.showModel.model }})
+				// this.$router.addRoute({path: '', query: { model: this.showModel.model }})
+				// this.$router.replace({path: '', query: { model: this.showModel.model }})
+				this.redirectSetup({ model: this.showModel.model })
 				this.searchModelsBasic()
 			}
+		},
+		redirectSetup(query) {
+			let path = window.location.pathname
+			this.$router.addRoute({path: path, query: query})
+			this.$router.replace({path: path, query: query})
 		},
 		changeModelInfo(key, val) {
 			let data = {}

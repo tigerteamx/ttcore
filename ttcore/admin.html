@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width initial-scale=1 maximum-scale=1" />
 	<title>Admin</title>
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
-	<link rel="stylesheet" type="text/css" href="admin_static/style.css"/>
+	<link rel="stylesheet" type="text/css" href="/admin_static/style.css"/>
 </head>
 <body>
 	<div id="app">
@@ -13,7 +13,7 @@
 			<div class="container-full-w">
 				<strong class="logo">
 					<a href="#">
-						<img src="admin_static/logo-black.png" alt="Developments.es">
+						<img src="/admin_static/logo-black.png" alt="Developments.es">
 					</a>
 				</strong>
 			</div>
@@ -226,7 +226,7 @@
 <script type="module">
 	const { createApp } = Vue
 	const Home = { template: '<div>Might be imported from file</div>' }
-	import Script from './admin_static/script.js'
+	import Script from '/admin_static/script.js'
 	const routes = [
 		{ path: '/', component: Home }
 	]
