@@ -18,7 +18,6 @@ setuptools.setup(
         'ttcore': [
             'docs.html',
             'admin.html',
-            'admin_assets/logo-black.png',
             'admin_assets/script.js',
             'admin_assets/style.css',
         ]

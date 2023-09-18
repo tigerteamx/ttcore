@@ -43,6 +43,10 @@ h5 {
 	margin: 0 0 10px;
 }
 
+h1 {
+	font-size: 28px;
+}
+
 p {
 	margin: 0 0 10px;
 }
@@ -74,17 +78,18 @@ button {
 }
 
 .btn {
-	padding: 10px 15px;
+	padding: 10px 12px;
 	border-radius: 6px;
 	color: #fff;
 	text-align: center;
-	font-size: 16px;
+	font-size: 14px;
 	display: inline-block;
 	vertical-align: middle;
 	background-color: #28a745;
 	border: 1px solid #28a745;
 	font-weight: 400;
 	transition: .3s color, .3s background-color, .3s border-color;
+
 }
 
 .btn:hover {
@@ -162,12 +167,12 @@ span.form-control {
 }
 
 .common-content {
-	width: 300px;
+	width: 230px;
 	background-color: #F3F3F3;
 }
 
 .main-content {
-	width: calc(100% - 300px);
+	width: calc(100% - 230px);
 }
 
 .models-list {

@@ -140,15 +140,16 @@ def tpost(path, auth_func=None, roles=None):
         @wraps(func)
         @post(path)
         def wrapper(*args, **kwargs):
+            valid_auth = True
             if auth_func and callable(auth_func):
-                valid_auth = auth_func(roles) if roles else auth_func()
+                valid_auth = auth_func()
             else:
                 valid_auth = _auth(roles) if roles else True
 
             if not valid_auth:
                 return HTTPResponse(
                     status=401,
-                    body=dict(msg=f"Invalid access.{' Requires ' + ','.join(roles) if roles else ''}")
+                    body=dict(msg=f"Invalid access.")
                 )
 
             req_data = _get_request_data()
@@ -404,12 +405,12 @@ def install_admin(path):
     this_dir, this_filename = os.path.split(__file__)
     admin_path = os.path.join(this_dir, "admin.html")
 
-    @get(f'/admin_static/<filepath:path>')
+    @get('/admin_static/<filepath:path>')
     def admin_static(filepath):
         return static_file(filepath, root=os.path.join(this_dir, 'admin_assets'))
 
     @get(path)
-    def mydocs_view():
+    def admin_view():
         with open(admin_path, "r") as f:
             return f.read()
 

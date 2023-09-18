@@ -94,7 +94,6 @@ export default {
 		},
 		openModel(model) {
 			this.redirectSetup({ model: model.model })
-			//this.$router.push({query: { model: model.model }})
 			this.showModel = model
 			this.editModel = null
 			this.newModel = null
@@ -103,7 +102,6 @@ export default {
 		},
 		editModelInfo(item) {
 			this.redirectSetup({ model: this.showModel.model, edit: item.pid })
-			//this.$router.push({query: { model: this.showModel.model, edit: item.pid }})
 			this.editModel = item
 			this.newModel = null
 		},
@@ -114,7 +112,6 @@ export default {
 		closeModelInfo() {
 			this.editModel = null
 			this.redirectSetup({ model: this.showModel.model })
-			//this.$router.push({query: { model: this.showModel.model }})
 		},
 		initCheck() {
 			if(this.modelDetail) {
