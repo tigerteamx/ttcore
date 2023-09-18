@@ -191,10 +191,10 @@ class TigerAdmin:
 
         self.models.append(admin_model)
 
-    def install(self, auth_func=None, roles=None, prefix=""):
+    def install(self, auth=None, prefix=""):
         make_public([
             self.admin_get_models,
             self.admin_search_instance,
             self.admin_create_instance,
             self.admin_update_instance,
-        ], auth_func=auth_func, roles=roles, prefix=prefix)
+        ], auth=auth, prefix=prefix)

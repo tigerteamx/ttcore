@@ -126,7 +126,7 @@ def _set_context(ctx, params, data):
     return data
 
 
-def tpost(path, auth_func=None, roles=None):
+def tpost(path, auth=None, roles=None):
     def decorator(func):
         params = signature(func).parameters
         doc_params = _get_doc_params(params)
@@ -141,8 +141,8 @@ def tpost(path, auth_func=None, roles=None):
         @post(path)
         def wrapper(*args, **kwargs):
             valid_auth = True
-            if auth_func and callable(auth_func):
-                valid_auth = auth_func()
+            if auth and callable(auth):
+                valid_auth = auth()
             else:
                 valid_auth = _auth(roles) if roles else True
 
@@ -448,9 +448,9 @@ def stopwatch(callback):
     return wrapper
 
 
-def make_public(funcs, auth_func=None, roles=None, prefix=""):
+def make_public(funcs, auth=None, roles=None, prefix=""):
     for func in funcs:
-        tpost(f"{prefix}/{func.__name__}", auth_func=auth_func, roles=roles)(func)
+        tpost(f"{prefix}/{func.__name__}", auth=auth, roles=roles)(func)
 
 
 def install_diskspace_checker(path, disk_path, space):
