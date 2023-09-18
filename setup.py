@@ -18,8 +18,6 @@ setuptools.setup(
         'ttcore': [
             'docs.html',
             'admin.html',
-            'admin_assets/script.js',
-            'admin_assets/style.css',
         ]
     },
     install_requires=[],  # Used for dependencies
