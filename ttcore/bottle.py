@@ -126,7 +126,7 @@ def _set_context(ctx, params, data):
     return data
 
 
-def tpost(path, roles=None):
+def tpost(path, auth=None, roles=None):
     def decorator(func):
         params = signature(func).parameters
         doc_params = _get_doc_params(params)
@@ -140,8 +140,17 @@ def tpost(path, roles=None):
         @wraps(func)
         @post(path)
         def wrapper(*args, **kwargs):
-            if roles and not _auth(roles):
-                return HTTPResponse(status=401, body=dict(msg=f"Invalid access. Requires {', '.join(roles)}"))
+            valid_auth = True
+            if auth and callable(auth):
+                valid_auth = auth()
+            else:
+                valid_auth = _auth(roles) if roles else True
+
+            if not valid_auth:
+                return HTTPResponse(
+                    status=401,
+                    body=dict(msg=f"Invalid access.")
+                )
 
             req_data = _get_request_data()
             data = req_data if req_data and len(params) > 0 else {}
@@ -392,6 +401,16 @@ def install_docs(path, base):
             )
 
 
+def install_admin(path):
+    this_dir, this_filename = os.path.split(__file__)
+    admin_path = os.path.join(this_dir, "admin.html")
+
+    @get(path)
+    def admin_view():
+        with open(admin_path, "r") as f:
+            return f.read()
+
+
 def install_cors(hosts):
     @route("/<:re:.*>", method="OPTIONS")
     def enable_cors_generic_route():
@@ -429,9 +448,9 @@ def stopwatch(callback):
     return wrapper
 
 
-def make_public(funcs, roles=None, prefix=""):
+def make_public(funcs, auth=None, roles=None, prefix=""):
     for func in funcs:
-        tpost(f"{prefix}/{func.__name__}", roles=roles)(func)
+        tpost(f"{prefix}/{func.__name__}", auth=auth, roles=roles)(func)
 
 
 def install_diskspace_checker(path, disk_path, space):

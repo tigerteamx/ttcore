@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ttcore",
-    version="0.1.18",
+    version="0.1.19",
     author="Martin F",
     author_email="pypi.org@tigerteamx.com",
     description="Atomic Batteries Included. Used by https://tigerteamx.com to maximize producitivty.",
@@ -15,7 +15,10 @@ setuptools.setup(
     url="https://github.com/tigerteamx/ttcore",
     packages=['ttcore'],
     package_data={
-        'ttcore': ['docs.html']
+        'ttcore': [
+            'docs.html',
+            'admin.html',
+        ]
     },
     install_requires=[],  # Used for dependencies
     classifiers=[
