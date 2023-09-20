@@ -3,5 +3,6 @@
 set -e
 
 rm -rf build dist
+python3 up_version.py
 python3 -m build
 python3 -m twine upload --verbose --repository  pypi dist/*
