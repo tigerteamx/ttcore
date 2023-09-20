@@ -10,6 +10,7 @@ import inspect
 import time
 import os
 import shutil
+from decimal import Decimal
 
 
 import peewee
@@ -88,7 +89,25 @@ def _validate_data(data, params_list):
     """
     Validate request data based on params_list info
     """
-    datatypes = {"str": str, "float": float, "int": int, "bool": bool, "dict": dict, "list": list}
+    datatypes = {
+        "str": str,
+        "float": float,
+        "int": int,
+        "bool": bool,
+        "dict": dict,
+        "list": list,
+        "Decimal": Decimal,
+    }
+    custom_types = [Decimal]
+
+    def is_type(value, datatype):
+        if datatype not in custom_types:
+            return isinstance(value, datatype)
+        try:
+            datatype(value)
+            return True
+        except: # noqa
+            return False
 
     try:
         for params_dict in params_list:
@@ -100,7 +119,7 @@ def _validate_data(data, params_list):
             if required and name not in data.keys():
                 raise ValueError(f"{name} is required.")
 
-            if name in data.keys() and not isinstance(data[name], datatype):
+            if name in data.keys() and not is_type(data[name], datatype):
                 raise ValueError(f"{name} should be instance of the {datatype} type.")
 
             if not required and name not in data.keys():
