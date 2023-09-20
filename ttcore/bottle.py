@@ -401,14 +401,15 @@ def install_docs(path, base):
             )
 
 
-def install_admin(path):
+def install_admin(path, api_url):
     this_dir, this_filename = os.path.split(__file__)
     admin_path = os.path.join(this_dir, "admin.html")
 
     @get(path)
     def admin_view():
         with open(admin_path, "r") as f:
-            return f.read()
+            content = f.read()
+            return content.replace("BASE_URL_TO_UPDATE", api_url)
 
 
 def install_cors(hosts):
