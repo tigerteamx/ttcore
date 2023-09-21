@@ -310,7 +310,7 @@ class ErrorHandler:
                 print(msg)
                 self.on_msg(msg)
                 self._recent_msgs.append(datetime.now())
-                self.log_error(msg)
+                self.log_error(format_exc())
                 return {"msg": "Internal Error"}
 
         return wrapper
