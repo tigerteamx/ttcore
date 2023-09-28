@@ -770,9 +770,7 @@
 				this.newModel = {}
 
 				this.showModel.required_fields.forEach(item => {
-					if(item != 'pid') {
-						this.newModel[item] = ''
-					}
+					this.newModel[item] = ''
 				})
 			},
 			closeNewModel() {
