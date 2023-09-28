@@ -818,7 +818,7 @@
 			},
 			commonHeaders() {
 				return this.HEADERS.filter(item => {
-					return this.modelResults[0][item]
+					return this.modelResults[0][item] || this.modelResults[this.modelResults.length-1][item]
 				})
 			}
 		}
