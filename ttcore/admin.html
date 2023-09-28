@@ -6,6 +6,10 @@
 	<title>Admin</title>
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
 	<style>
+		[v-cloak] {
+			display: none;
+		}
+
 		* {
 			box-sizing: border-box;
 		}
@@ -86,7 +90,7 @@
 		}
 
 		.btn {
-			padding: 10px 12px;
+			padding: 11px 12px;
 			border-radius: 6px;
 			color: #fff;
 			text-align: center;
@@ -143,9 +147,18 @@
 			display: flex;
 		}
 
+		.flex-wrap {
+			flex-wrap: wrap;
+		}
+
+		.align-center {
+			align-items: center;
+		}
+
 		.search-form {
 			display: flex;
 			margin-right: 10px;
+			padding: 5px 0;
 		}
 
 		.search-form .btn {
@@ -165,6 +178,7 @@
 
 		#main {
 			display: flex;
+			height: 100%;
 		}
 
 		.column {
@@ -174,12 +188,12 @@
 		}
 
 		.common-content {
-			width: 230px;
+			width: 150px;
 			background-color: #F3F3F3;
 		}
 
 		.main-content {
-			width: calc(100% - 230px);
+			width: calc(100% - 150px);
 		}
 
 		.models-list {
@@ -264,6 +278,7 @@
 			text-align: center;
 			border: 1px solid #F3F3F3;
 			padding: 5px;
+			word-break: break-all;
 		}
 
 		.table th {
@@ -287,12 +302,8 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
+			flex-wrap: wrap;
 			margin-bottom: 20px;
-		}
-
-		.table-holder .header-holder:before {
-			content: '';
-			font-size: 0;
 		}
 
 		.header-holder h1,
@@ -379,7 +390,7 @@
 	</style>
 </head>
 <body>
-	<div id="app">
+	<div id="app" v-cloak>
 		<main id="main">
 			<div class="common-content column">
 				<ul class="models-list">
@@ -393,15 +404,22 @@
 					<div class="table-holder column">
 						<div class="header-holder">
 							<h1>{{ showModel.model }}</h1>
-							<div class="d-flex">
-								<form action="#" class="search-form" @submit.prevent="searchModelsBasic(search)">
+							<div class="d-flex flex-wrap align-center">
+								<form action="#" class="search-form" @submit.prevent="searchModelsByQ()">
 									<input type="text" class="form-control" v-model="search">
 									<button type="submit" class="btn">Search</button>
 								</form>
 								<a href="#" class="btn" @click.prevent="addNewModel">Add new</a>
 							</div>
 						</div>
-						<table class="table">
+						<table class="table" v-if="modelResults?.length == 0">
+							<tbody>
+								<tr>
+									<td><i>No data</i></td>
+								</tr>
+							</tbody>
+						</table>
+						<table class="table" v-else>
 							<thead>
 								<tr>
 									<th
@@ -426,7 +444,7 @@
 								</tr>
 							</tbody>
 						</table>
-						<ul class="pagination">
+						<ul class="pagination" v-if="modelResults?.length > 0">
 							<li v-if="page != 1">
 								<a href="#" @click.prevent="goTo(1)">|&#60;</a>
 							</li>
@@ -622,7 +640,8 @@
 					{ label: 'Views', code: 5 },
 					{ label: 'Purchase Agreement', code: 6 },
 					{ label: 'Location', code: 7 }
-				]
+				],
+				pages: [1]
 			}
 		},
 		methods: {
@@ -633,23 +652,28 @@
 					this.messages.shift();
 				}, delay);
 			},
-			searchModels(model, q) {
+			searchModels(model) {
 				let data = {
 					name: model,
 					page: this.page
 				}
 
-				if(q) {
-					data['q'] = q;
+				if(this.search) {
+					data['q'] = this.search;
 				}
 
 				return this.$api.post('admin_interface/admin_search_instance', data) //(it is needed to pass name of model, and search passing q, order_by, page, etc. as usual)
 			},
-			searchModelsBasic(q) {
-				this.searchModels(this.showModel.model, q)
+			searchModelsByQ() {
+				this.page = 1;
+				this.searchModelsBasic()
+			},
+			searchModelsBasic() {
+				this.searchModels(this.showModel.model)
 				.then(res => {
 					this.modelResults = res.data.data;
 					this.no_pages = Math.ceil(res.data.no_objects / res.data.paginate_by)
+					this.setPages();
 				})
 			},
 			updateModel(updateData) {
@@ -746,9 +770,7 @@
 				this.newModel = {}
 
 				this.showModel.required_fields.forEach(item => {
-					if(item != 'pid') {
-						this.newModel[item] = ''
-					}
+					this.newModel[item] = ''
 				})
 			},
 			closeNewModel() {
@@ -772,6 +794,12 @@
 				this.$api.defaults.headers.common['Authorization'] = `bearer ${token}`
 
 				this.fetchModels();
+			},
+			setPages() {
+				var list = Array(this.no_pages).fill().map((_, i) => i+1);
+				var min = this.no_pages < this.MAX_PAGE_ITEMS ? 1 : this.page < this.no_pages - this.MAX_PAGE_ITEMS ? this.page : this.no_pages - this.MAX_PAGE_ITEMS;
+				var max = this.no_pages < this.MAX_PAGE_ITEMS ? this.MAX_PAGE_ITEMS : this.page < this.no_pages - this.MAX_PAGE_ITEMS ? this.page + this.MAX_PAGE_ITEMS : this.no_pages;
+				this.pages = list.slice(min - 1, max);
 			}
 		},
 		created() {
@@ -792,12 +820,6 @@
 				return this.HEADERS.filter(item => {
 					return this.modelResults[0][item]
 				})
-			},
-			pages() {
-				var list = Array(this.no_pages).fill().map((_, i) => i+1);
-				var min = this.no_pages < this.MAX_PAGE_ITEMS ? 1 : this.page < this.no_pages - this.MAX_PAGE_ITEMS ? this.page : this.no_pages - this.MAX_PAGE_ITEMS;
-				var max = this.no_pages < this.MAX_PAGE_ITEMS ? this.MAX_PAGE_ITEMS : this.page < this.no_pages - this.MAX_PAGE_ITEMS ? this.page + this.MAX_PAGE_ITEMS : this.no_pages;
-				return list.slice(min - 1, max);
 			}
 		}
 	})
