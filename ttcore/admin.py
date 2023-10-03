@@ -23,9 +23,12 @@ peewee2type = {
 
 
 class AdminModel:
-    search_fields = ["pid"]
-    required_fields = ["pid"]
+    search_fields = ["pid", "id"]
+    required_fields = ["pid", "id"]
     non_edit_fields = ["pid", "id"]
+    display_fields = ["pid", "id"]
+    display_custom_fields = []
+    choices_fields = []
     upload_fields = []
 
     def __init__(self, model, data_path=None):
@@ -36,11 +39,22 @@ class AdminModel:
         self.required_fields = self.get_existing_fields(self.required_fields)
         self.non_edit_fields = self.get_existing_fields(self.non_edit_fields)
         self.upload_fields = self.get_existing_fields(self.upload_fields)
+        self.display_fields = self.get_existing_fields(self.display_fields)
+        self.choices_fields = self.get_existing_fields(self.choices_fields)
+        self.display_custom_fields = self.display_custom_fields
         self.data_path = "data" if not data_path else data_path
         mkdir(f"{self.data_path}/tmp")
 
     def get_existing_fields(self, fields):
-        return [field for field in fields if hasattr(self.model, field)]
+        res_fields = []
+
+        for field in fields:
+            if not hasattr(self.model, field.split("__")[0]):
+                continue
+
+            res_fields.append({field: fields[field]}) if isinstance(fields, dict) else res_fields.append(field)
+
+        return res_fields
 
     def create_data_handler(self, data):
         return data
@@ -63,6 +77,9 @@ class AdminModel:
             required_fields=self.required_fields,
             non_edit_fields=self.non_edit_fields,
             upload_fields=self.upload_fields,
+            choices_fields=self.choices_fields,
+            display_fields=self.display_fields,
+            display_custom_fields=self.display_custom_fields,
             all_fields=self.get_all_fields(),
         )
 
